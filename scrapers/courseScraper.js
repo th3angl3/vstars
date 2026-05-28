@@ -1,6 +1,5 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const { connectDB, client } = require("../config/db");
 
 class Scraper {
     constructor() {
@@ -50,15 +49,23 @@ class Scraper {
     }
 }
 
-(async () => {
-    await connectDB();
+async function scrapeCourseSchedule() {
     const scraper = new Scraper();
     const [acadYr, sem] = await scraper.getAcadYrSem();
-    console.log(`Academic Year: ${acadYr}, Semester: ${sem}`);
     const result = await scraper.getCourseScheduleHtml(acadYr, sem);
 
-    const fs = require("fs");
-    fs.writeFileSync("course_schedule.html", result);
+    // writeToFile("course_schedule.html", result);
+    // console.log(acadYr, sem);
 
-    console.log("File saved");
-})();
+    return result;
+}
+
+async function writeToFile(filename, data) {
+    const fs = require("fs");
+    fs.writeFileSync(filename, data);
+    console.log(`File ${filename} saved`);
+}
+
+module.exports = { scrapeCourseSchedule };
+
+// scrapeCourseSchedule();
