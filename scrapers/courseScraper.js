@@ -54,18 +54,25 @@ async function scrapeCourseSchedule() {
     const [acadYr, sem] = await scraper.getAcadYrSem();
     const result = await scraper.getCourseScheduleHtml(acadYr, sem);
 
-    // writeToFile("course_schedule.html", result);
-    // console.log(acadYr, sem);
-
     return result;
-}
-
-async function writeToFile(filename, data) {
-    const fs = require("fs");
-    fs.writeFileSync(filename, data);
-    console.log(`File ${filename} saved`);
 }
 
 module.exports = { scrapeCourseSchedule };
 
-// scrapeCourseSchedule();
+
+if (require.main === module) {
+    async function writeToFile(filename, data) {
+        const fs = require("fs");
+        fs.writeFileSync(filename, data);
+        console.log(`File ${filename} saved`);
+    }
+
+    const scraper = new Scraper();
+    const [acadYr, sem] = await scraper.getAcadYrSem();
+    const result = await scraper.getCourseScheduleHtml(acadYr, sem);
+
+    writeToFile("temp/course_schedule.html", result);
+    console.log(acadYr, sem);
+
+    return result;
+}

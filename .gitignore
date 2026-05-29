@@ -4,5 +4,5 @@ node_modules/
 # environment variables
 .env
 
-# temp html files
-*.html
+# debug temp files
+temp/
