@@ -16,7 +16,8 @@ class Scraper {
 
             return acadsem.split(";").map(Number);
         } catch (err) {
-            console.error("Request failed:", err.message);
+            console.error("Axios failed:", err.message);
+            throw err;
         }
     }
 
@@ -44,20 +45,13 @@ class Scraper {
             return response.data;
 
         } catch (err) {
-            console.error("Request failed:", err.message);
+            console.error("Axios failed:", err.message);
+            throw err;
         }
     }
 }
 
-async function scrapeCourseSchedule() {
-    const scraper = new Scraper();
-    const [acadYr, sem] = await scraper.getAcadYrSem();
-    const result = await scraper.getCourseScheduleHtml(acadYr, sem);
-
-    return result;
-}
-
-module.exports = { scrapeCourseSchedule };
+module.exports = { Scraper };
 
 
 if (require.main === module) {
@@ -67,12 +61,11 @@ if (require.main === module) {
         console.log(`File ${filename} saved`);
     }
 
-    const scraper = new Scraper();
-    const [acadYr, sem] = await scraper.getAcadYrSem();
-    const result = await scraper.getCourseScheduleHtml(acadYr, sem);
-
-    writeToFile("temp/course_schedule.html", result);
-    console.log(acadYr, sem);
-
-    return result;
+    (async () => {
+        const scraper = new Scraper();
+        const [acadYr, sem] = await scraper.getAcadYrSem();
+        const result = await scraper.getCourseScheduleHtml(acadYr, sem);
+        writeToFile("temp/course_schedule.html", result);
+        console.log(acadYr, sem);
+    })();
 }

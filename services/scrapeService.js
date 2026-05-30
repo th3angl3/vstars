@@ -1,22 +1,13 @@
+const { Scraper } = require("../scrapers/courseScraper");
+const { populateDB } = require("./dbService");
+
 function processCourseSchedule(html) {
     const cheerio = require("cheerio");
     const $ = cheerio.load(html);
 
     const courseSchedule = [];
-
-    // initialize variables to store course details
     let courseInfo = null;
-    let courseCode = "";
-    let courseName = "";
-    let au = "";
-    let index = "";
-    let type = "";
-    let group = "";
-    let day = "";
-    let time = "";
-    let venue = "";
-    let remark = "";
-
+    let index, type, group, day, time, venue;
 
     $("table tr").each((i, row) => {
         const rowData = [];
@@ -59,11 +50,39 @@ function processCourseSchedule(html) {
 
         // console.log(`Processed row ${i + 1}:`, courseInfo);
     });
-    courseSchedule.push(courseInfo); // push last course info
+    if (courseInfo) {
+        courseSchedule.push(courseInfo);
+    }
     return courseSchedule;
 };
 
-module.exports = { processCourseSchedule };
+async function scrapeData() {
+    try { 
+        const scraper = new Scraper();
+        const [acadYr, sem] = await scraper.getAcadYrSem();
+        const result = await scraper.getCourseScheduleHtml(acadYr, sem);
+        const courseSchedule = processCourseSchedule(result);
+        return { acadYr, sem, courseSchedule };
+    } catch (err) {
+        console.error("Scraping failed:", err.message);
+        throw err;
+    }
+}
+
+async function scrapeService() {
+    try {
+        const { acadYr, sem, courseSchedule } = await scrapeData();
+        await populateDB(acadYr, sem, courseSchedule);
+
+        return { acadYr, sem, courseSchedule };
+    } catch (err) {
+        console.error("Scraping service error:", err.message);
+        throw err;
+    }
+
+}
+
+module.exports = { scrapeService };
 
 
 if (require.main === module) {
