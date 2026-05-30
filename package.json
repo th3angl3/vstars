@@ -1,5 +1,6 @@
 {
   "name": "vstars",
+  "type": "module",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -27,6 +28,10 @@
     "mongodb": "^7.2.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "nodemon": "^3.1.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
   }
 }
