@@ -1,11 +1,12 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
+import type { AcadYrSem } from "../types/types.js";
 
 export class Scraper {
     private readonly ACAD_SEM_URL = "https://wish.wis.ntu.edu.sg/webexe/owa/aus_schedule.main";
     private readonly SOURCE_URL = "https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1";
     
-    async getAcadYrSem(): Promise<[Number, Number]> {
+    async getAcadYrSem(): Promise<AcadYrSem> {
         try {
             const response = await axios.get<string>(
                 this.ACAD_SEM_URL,
@@ -34,7 +35,7 @@ export class Scraper {
                 throw new Error("acadYrSem contains invalid numbers");
             }
 
-            return [acadYr, sem];
+            return { acadYr, sem };
         } catch (error) {
             console.error(
                 "Error fetching academic year and semester.",

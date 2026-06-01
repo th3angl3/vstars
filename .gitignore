@@ -6,3 +6,6 @@ node_modules/
 
 # debug temp files
 temp/
+
+# build output
+dist/
