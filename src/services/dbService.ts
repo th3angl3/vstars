@@ -1,8 +1,10 @@
-const { client } = require('../config/db');
-const { DB_NAME, COLLECTIONS } = require('../config/constants');
+import { ClientSession } from "mongodb";
+import { client } from "../config/db.js";
+import { DB_NAME, COLLECTIONS } from "../config/constants.js";
+import type { CourseSchedule } from "../types/types.js";
 
-async function populateDB(acadYr, sem, courseSchedule) {
-    const session = client.startSession();
+async function populateDB(acadYr: Number, sem: Number, courseSchedule: CourseSchedule[]): Promise<void> {
+    const session: ClientSession = client.startSession();
 
     try {
         session.startTransaction();
@@ -11,7 +13,7 @@ async function populateDB(acadYr, sem, courseSchedule) {
         let collection = client.db(DB_NAME).collection(COLLECTIONS.YR_SEM);
         await collection.updateOne(
             {},
-            { $set: { acadYr: acadYr, sem: sem } },
+            { $set: { acadYr, sem } },
             { upsert: true, session }
         );
 
@@ -23,7 +25,7 @@ async function populateDB(acadYr, sem, courseSchedule) {
 
         await session.commitTransaction();
     } catch (err) {
-        console.error("Database operation failed:", err.message);
+        console.error("Database operation failed:", (err as Error).message);
         await session.abortTransaction();
         throw err;
     } finally {
@@ -31,4 +33,5 @@ async function populateDB(acadYr, sem, courseSchedule) {
     }
 }
 
-module.exports = { populateDB };
+export { populateDB };
+
