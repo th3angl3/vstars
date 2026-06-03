@@ -1,18 +1,22 @@
 import { load } from "cheerio";
 import { Scraper } from "../scrapers/courseScraper.js";
 import { populateDB } from "./dbService.js";
-import type { AcadYrSem, CourseSchedule, ScheduleEntry, ScrapeResponse, ScrapeResult } from "../types/types.js";
+import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult } from "../types/types.js";
 import type { Element } from "domhandler";
 
+// debugging imports
+import * as fs from "fs";
 
 function processCourseSchedule(html: string): CourseSchedule[] {
     const $ = load(html);
 
     const courseSchedule: CourseSchedule[] = [];
+    let currentIndex: CourseIndex | null = null;
     let courseInfo: CourseSchedule | null = null;
     let index: string = "", type: string = "", group: string = "", day: string = "", time: string = "", venue: string = "", remark: string = "" ;
 
-    $("table tr").each((i: Number, row: Element) => {
+    const rows = $("table tr").toArray();
+    for (const row of rows) {
         const rowData: string[] = [];
 
         $(row).find("th, td").each((j: Number, cell: Element) => {
@@ -21,10 +25,15 @@ function processCourseSchedule(html: string): CourseSchedule[] {
         });
 
         if (rowData.length < 3) {
-            return; // skip empty rows
+            continue; // skip empty rows
         }
 
         if (rowData.length === 3) {
+            if (currentIndex) {
+                if (!courseInfo) throw new Error("Course information not found for current index");
+                courseInfo.schedule.push(currentIndex);
+                currentIndex = null;
+            }
             if (courseInfo) {
                 courseSchedule.push(courseInfo);
             }
@@ -41,13 +50,12 @@ function processCourseSchedule(html: string): CourseSchedule[] {
 
         } else {
             if (rowData[0] === "INDEX") {
-                return; // skip header row
+                continue; // skip header row
             }
 
             const [idx, typ, grp, dy, tm, vn, rmk] = rowData;
 
-            const scheduleEntry: ScheduleEntry = {
-                index: idx ?? index ?? "",
+            const entry: IndexEntry = {
                 type: typ ?? type ?? "",
                 group: grp ?? group ?? "",
                 day: dy ?? day ?? "",
@@ -57,14 +65,36 @@ function processCourseSchedule(html: string): CourseSchedule[] {
             };
 
             if (!courseInfo) throw new Error("Schedule entry found without corresponding course information");
-            courseInfo.schedule.push(scheduleEntry);
-        }
+            
+            if (idx) {
+                if (currentIndex) {
+                    courseInfo.schedule.push(currentIndex);
+                }
 
-        // console.log(`Processed row ${i + 1}:`, courseInfo);
-    });
+                currentIndex = {
+                    index: idx,
+                    entry: [entry]
+                };
+            }
+            else {
+                if (!currentIndex) throw new Error("Schedule entry found without corresponding index");
+                currentIndex.entry.push(entry);
+            }
+        }
+    };
+
+    if (currentIndex) {
+        if (!courseInfo) throw new Error("Course information not found for current index at end of table");
+        courseInfo.schedule.push(currentIndex);
+    }
     if (courseInfo) {
         courseSchedule.push(courseInfo);
     }
+
+    // debugging output
+    fs.writeFileSync("temp/courseSchedule.html", html);
+    fs.writeFileSync("temp/courseSchedule.json", JSON.stringify(courseSchedule, null, 2));
+
     return courseSchedule;
 };
 
@@ -75,6 +105,7 @@ async function scrapeData(): Promise<ScrapeResult> {
         const acadYrSem: AcadYrSem = await scraper.getAcadYrSem();
         const html = await scraper.getCourseScheduleHtml(acadYrSem.acadYr, acadYrSem.sem);
         const courseSchedule = processCourseSchedule(html);
+
         return { ...acadYrSem, courseSchedule };
     } catch (err) {
         console.error("Error occurred while scraping data:", (err as Error).message);

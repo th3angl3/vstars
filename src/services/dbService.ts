@@ -33,5 +33,14 @@ async function populateDB(acadYr: Number, sem: Number, courseSchedule: CourseSch
     }
 }
 
-export { populateDB };
+async function fetchCourseSchedule(courseCodeList: string[]): Promise<CourseSchedule[]> {
+    const collection = client.db(DB_NAME).collection<CourseSchedule>(COLLECTIONS.COURSE_SCHEDULE);
+    const courseSchedules = await collection.find(
+        { courseCode: { $in: courseCodeList } },
+        { projection: { _id: 0 } }
+    ).toArray();
 
+    return courseSchedules;
+}
+
+export { populateDB, fetchCourseSchedule };
