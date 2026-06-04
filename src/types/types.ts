@@ -40,8 +40,8 @@ export interface ScrapeResponse {
     message? : string;
 }
 
-type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
+export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
 
 export interface TimetableFilter {
-    excludeTimeSlots?: { day: DayOfWeek; timeIndex: Number[] }[];
+    excludeTimeSlots?: Partial<Record<DayOfWeek, Number[]>>;
 }
