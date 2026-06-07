@@ -4,9 +4,6 @@ import { populateDB } from "./dbService.js";
 import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult } from "../types/types.js";
 import type { Element } from "domhandler";
 
-// debugging imports
-import * as fs from "fs";
-
 function processCourseSchedule(html: string): CourseSchedule[] {
     const $ = load(html);
 
@@ -56,12 +53,12 @@ function processCourseSchedule(html: string): CourseSchedule[] {
             const [idx, typ, grp, dy, tm, vn, rmk] = rowData;
 
             const entry: IndexEntry = {
-                type: typ ?? type ?? "",
-                group: grp ?? group ?? "",
-                day: dy ?? day ?? "",
-                time: tm ?? time ?? "",
-                venue: vn ?? venue ?? "",
-                remark: rmk ?? remark ?? ""
+                type: typ ?? "",
+                group: grp ?? "",
+                day: dy ?? "",
+                time: tm ?? "",
+                venue: vn ?? "",
+                remark: rmk ?? ""
             };
 
             if (!courseInfo) throw new Error("Schedule entry found without corresponding course information");
@@ -90,10 +87,6 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     if (courseInfo) {
         courseSchedule.push(courseInfo);
     }
-
-    // debugging output
-    fs.writeFileSync("temp/courseSchedule.html", html);
-    fs.writeFileSync("temp/courseSchedule.json", JSON.stringify(courseSchedule, null, 2));
 
     return courseSchedule;
 };

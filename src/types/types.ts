@@ -43,5 +43,18 @@ export interface ScrapeResponse {
 export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
 
 export interface TimetableFilter {
-    excludeTimeSlots?: Partial<Record<DayOfWeek, Number[]>>;
+    excludeTimeSlots?: Partial<Record<DayOfWeek, number[]>>;
+}
+
+export interface TimetableEntry {
+    courseCode: string;
+    courseTitle: string;
+    selectedIndex: CourseIndex;
+}
+
+export interface TimetableResponse {
+    success: boolean;
+    count: number;
+    notFound: string[];   // course codes not found in DB
+    timetables: TimetableEntry[][];
 }

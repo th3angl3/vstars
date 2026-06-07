@@ -1,21 +1,14 @@
 import { fetchCourseSchedule } from "./dbService.js";
-import type { CourseIndex, CourseSchedule, TimetableFilter, DayOfWeek } from "../types/types.js";
+import type { CourseIndex, CourseSchedule, TimetableFilter, DayOfWeek, TimetableEntry, TimetableResponse } from "../types/types.js";
+import { MAX_TIMETABLE_RESULTS } from "../config/constants.js";
 
-async function getCourseSchedule(courseCodeList: string[]): Promise<CourseSchedule[]> {
-    const courseSchedules = await fetchCourseSchedule(courseCodeList);
-    for (const courseCode of courseCodeList) {
-        const schedule = courseSchedules.find(schedule => schedule.courseCode === courseCode);
-        if (!schedule) {
-            courseSchedules.push({
-                courseCode,
-                courseTitle: "N/A",
-                au: "N/A",
-                schedule: []
-            })
-        }
-
+async function getCourseSchedule(courseCodeList: string[]): Promise<{ schedules: CourseSchedule[]; notFound: string[]}> {   
+    const schedules = await fetchCourseSchedule(courseCodeList);
+    const notFound = courseCodeList.filter(code => !schedules.some(s => s.courseCode === code));
+    if (notFound.length > 0) {
+        console.warn("Courses not found in DB:", notFound);
     }
-    return courseSchedules;
+    return { schedules, notFound };
 }
 
 function timeToIndex(time: string): number[] {
@@ -80,36 +73,44 @@ function isFilterConflict(course: CourseIndex, filters: TimetableFilter[]): bool
     return false;
 }
 
-function generateTimetables(courseSchedules: CourseSchedule[], filters: TimetableFilter[], insertedCourses: CourseIndex[]): CourseIndex[][] {
+function generateTimetables(
+    courseSchedules: CourseSchedule[],
+    filters: TimetableFilter[],
+    inserted: TimetableEntry[],
+    result: TimetableEntry[][] = []
+): TimetableEntry[][] {
+    if (result.length >= MAX_TIMETABLE_RESULTS) return result;
+
     if (courseSchedules.length === 0) {
-        return [insertedCourses];
+        result.push([...inserted]);
+        return result;
     }
 
-    let result: CourseIndex[][] = [];
+    const [current, ...rest] = courseSchedules;
 
-    for (const course of courseSchedules[0]!.schedule) {
-        const newInsertedCourses = [...insertedCourses, course];
-        if (isConflict(newInsertedCourses) || isFilterConflict(course, filters)) {
-            continue;
+    for (const index of current!.schedule) {
+        if (result.length >= MAX_TIMETABLE_RESULTS) break;
+
+        inserted.push({ courseCode: current!.courseCode, courseTitle: current!.courseTitle, selectedIndex: index });
+
+        if (!isConflict(inserted.map(e => e.selectedIndex)) && !isFilterConflict(index, filters)) {
+            generateTimetables(rest, filters, inserted, result);
         }
-        const newCourseSchedules = courseSchedules.slice(1);
-        const generated = generateTimetables(newCourseSchedules, filters, newInsertedCourses);
-        result.push(...generated);
+
+        inserted.pop();
     }
 
     return result;
 }
 
-async function namePlaceholder(courseCodeList: string[], filters: TimetableFilter[]): Promise<void> {
-    const courseSchedules: CourseSchedule[] = await getCourseSchedule(courseCodeList);
+async function generateTimetableService(courseCodeList: string[], filters: TimetableFilter[]): Promise<TimetableResponse> {
+    const { schedules, notFound } = await getCourseSchedule(courseCodeList);
 
-    // most constraining course first
-    courseSchedules.sort((a, b) => a.schedule.length - b.schedule.length);
-    const timetables = generateTimetables(courseSchedules, filters, []);
+    schedules.sort((a, b) => a.schedule.length - b.schedule.length);
+    const timetables = generateTimetables(schedules, filters, [], []);
 
-    
-
-
-
+    return { success: true, count: timetables.length, notFound, timetables };
 }
 
+
+export { generateTimetableService };

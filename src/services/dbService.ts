@@ -3,7 +3,7 @@ import { client } from "../config/db.js";
 import { DB_NAME, COLLECTIONS } from "../config/constants.js";
 import type { CourseSchedule } from "../types/types.js";
 
-async function populateDB(acadYr: Number, sem: Number, courseSchedule: CourseSchedule[]): Promise<void> {
+async function populateDB(acadYr: number, sem: number, courseSchedule: CourseSchedule[]): Promise<void> {
     const session: ClientSession = client.startSession();
 
     try {
