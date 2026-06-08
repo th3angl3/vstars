@@ -1,5 +1,11 @@
-export interface ScheduleEntry {
+import type { ObjectId } from "mongodb";
+
+export interface CourseIndex {
     index: string;
+    entry: IndexEntry[];
+}
+
+export interface IndexEntry {
     type: string;
     group: string;
     day: string;
@@ -9,13 +15,15 @@ export interface ScheduleEntry {
 }
 
 export interface CourseSchedule {
+    _id?: ObjectId;
     courseCode: string;
     courseTitle: string;
     au: string;
-    schedule: ScheduleEntry[];
+    schedule: CourseIndex[];
 }
 
 export interface AcadYrSem {
+    _id?: ObjectId;
     acadYr: number;
     sem: number;
 }
@@ -30,4 +38,23 @@ export interface ScrapeResponse {
     sem: number;
     count: number;
     message? : string;
+}
+
+export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
+
+export interface TimetableFilter {
+    excludeTimeSlots?: Partial<Record<DayOfWeek, number[]>>;
+}
+
+export interface TimetableEntry {
+    courseCode: string;
+    courseTitle: string;
+    selectedIndex: CourseIndex;
+}
+
+export interface TimetableResponse {
+    success: boolean;
+    count: number;
+    notFound: string[];   // course codes not found in DB
+    timetables: TimetableEntry[][];
 }

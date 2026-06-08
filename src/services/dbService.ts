@@ -3,7 +3,7 @@ import { client } from "../config/db.js";
 import { DB_NAME, COLLECTIONS } from "../config/constants.js";
 import type { CourseSchedule } from "../types/types.js";
 
-async function populateDB(acadYr: Number, sem: Number, courseSchedule: CourseSchedule[]): Promise<void> {
+async function populateDB(acadYr: number, sem: number, courseSchedule: CourseSchedule[]): Promise<void> {
     const session: ClientSession = client.startSession();
 
     try {
@@ -33,5 +33,14 @@ async function populateDB(acadYr: Number, sem: Number, courseSchedule: CourseSch
     }
 }
 
-export { populateDB };
+async function fetchCourseSchedule(courseCodeList: string[]): Promise<CourseSchedule[]> {
+    const collection = client.db(DB_NAME).collection<CourseSchedule>(COLLECTIONS.COURSE_SCHEDULE);
+    const courseSchedules = await collection.find(
+        { courseCode: { $in: courseCodeList } },
+        { projection: { _id: 0 } }
+    ).toArray();
 
+    return courseSchedules;
+}
+
+export { populateDB, fetchCourseSchedule };
