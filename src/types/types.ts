@@ -40,6 +40,12 @@ export interface ScrapeResponse {
     message? : string;
 }
 
+export interface ScrapeVenueResponse {
+    success: boolean;
+    count: number;
+    message?: string;
+}
+
 export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
 
 export interface TimetableFilter {
@@ -57,4 +63,12 @@ export interface TimetableResponse {
     count: number;
     notFound: string[];   // course codes not found in DB
     timetables: TimetableEntry[][];
+}
+
+type Spine = "NORTH SPINE" | "SOUTH SPINE" | "THE HIVE" | "THE ARC"
+
+export interface VenueData {
+    spine: Spine;
+    name: string;
+    location: string;
 }

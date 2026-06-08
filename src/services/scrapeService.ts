@@ -1,7 +1,8 @@
 import { load } from "cheerio";
-import { Scraper } from "../scrapers/courseScraper.js";
-import { populateDB } from "./dbService.js";
-import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult } from "../types/types.js";
+import { CourseScraper } from "../scrapers/courseScraper.js";
+import { VenueScraper } from "../scrapers/venueScraper.js";
+import { populateDB, populateVenueDB } from "./dbService.js";
+import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult, VenueData, ScrapeVenueResponse } from "../types/types.js";
 import type { Element } from "domhandler";
 
 function processCourseSchedule(html: string): CourseSchedule[] {
@@ -10,8 +11,7 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     const courseSchedule: CourseSchedule[] = [];
     let currentIndex: CourseIndex | null = null;
     let courseInfo: CourseSchedule | null = null;
-    let index: string = "", type: string = "", group: string = "", day: string = "", time: string = "", venue: string = "", remark: string = "" ;
-
+    
     const rows = $("table tr").toArray();
     for (const row of rows) {
         const rowData: string[] = [];
@@ -92,7 +92,7 @@ function processCourseSchedule(html: string): CourseSchedule[] {
 };
 
 async function scrapeData(): Promise<ScrapeResult> {
-    const scraper = new Scraper();
+    const scraper = new CourseScraper();
 
     try {
         const acadYrSem: AcadYrSem = await scraper.getAcadYrSem();
@@ -118,4 +118,42 @@ async function scrapeService(): Promise<ScrapeResponse> {
     }
 }
 
-export { scrapeService };
+
+function processVenueData(html: string): VenueData[] {
+
+    const $ = load(html);
+    
+    const venues: VenueData[] = []
+
+    const rows = $("table tr").toArray();
+    for (const row of rows) {
+        const rowData: string[] = [];
+
+        $(row).find("th, td").each((j: Number, cell: Element) => {
+            const text = $(cell).text().replace(/\s+/g, " ").trim();
+            rowData.push(text);
+        });
+
+        
+
+
+
+    }
+    
+    return venues
+}
+
+async function scrapeVenueService(): Promise<ScrapeVenueResponse> {
+    const scraper = new VenueScraper();
+    try {
+        const html: string = await scraper.getVenue();
+        const venues: VenueData[] = processVenueData(html);
+        await populateVenueDB(venues);
+        return { success: true, count: venues.length };
+    } catch (err) {
+        console.error("Error occurred in scrapeVenueData:", (err as Error).message);
+        throw err;
+    }
+}
+
+export { scrapeService, scrapeVenueService };
