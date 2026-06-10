@@ -6,9 +6,9 @@ import ttRoute from "./routes/ttRoute.js";
 const app = express();
 
 app.use(express.json());
-app.use("/api", scrapeVenueRoute)
-app.use("/api", scrapeCourseRoute);
-app.use("/api", ttRoute);
+app.use("/venue", scrapeVenueRoute)
+app.use("/course", scrapeCourseRoute);
+app.use("/tt", ttRoute);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, World!');

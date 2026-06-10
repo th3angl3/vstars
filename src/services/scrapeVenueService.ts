@@ -41,9 +41,15 @@ function processVenueData(html: string): VenueData[] {
             continue; // skip LT and TRX
         }
 
-        const spineRaw = rowData[0];
+        let spineRaw: string;
 
-        if (!isSpine(spineRaw!) || !rowData[3]) {
+        if (rowData[0] === "SCI BUILDING") {
+            spineRaw = "SOUTH SPINE";
+        } else {
+            spineRaw = rowData[0]!;
+        }
+
+        if (!isSpine(spineRaw) || !rowData[3]) {
             console.error("Malformatted data scraped:", rowData);
             continue;
         }
