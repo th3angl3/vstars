@@ -1,11 +1,13 @@
 import express, { type Request, type Response, type NextFunction } from "express";
-import scrapeRoute from "./routes/scrapeRoute.js";
+import scrapeVenueRoute from "./routes/scrapeVenueRoute.js";
+import scrapeCourseRoute from "./routes/scrapeCourseRoute.js";
 import ttRoute from "./routes/ttRoute.js";
 
 const app = express();
 
 app.use(express.json());
-app.use("/api", scrapeRoute);
+app.use("/api", scrapeVenueRoute)
+app.use("/api", scrapeCourseRoute);
 app.use("/api", ttRoute);
 
 app.get('/', (req: Request, res: Response) => {

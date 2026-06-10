@@ -1,4 +1,5 @@
 import type { ObjectId } from "mongodb";
+import { SPINES } from "../config/constants.js";
 
 export interface CourseIndex {
     index: string;
@@ -28,11 +29,11 @@ export interface AcadYrSem {
     sem: number;
 }
 
-export interface ScrapeResult extends AcadYrSem {
+export interface ScrapeCourseResult extends AcadYrSem {
     courseSchedule: CourseSchedule[];
 }
 
-export interface ScrapeResponse {
+export interface ScrapeCourseResponse {
     success: boolean;
     acadYr: number;
     sem: number;
@@ -65,7 +66,7 @@ export interface TimetableResponse {
     timetables: TimetableEntry[][];
 }
 
-type Spine = "NORTH SPINE" | "SOUTH SPINE" | "THE HIVE" | "THE ARC"
+export type Spine = typeof SPINES[number];
 
 export interface VenueData {
     spine: Spine;

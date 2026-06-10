@@ -1,8 +1,7 @@
 import { load } from "cheerio";
 import { CourseScraper } from "../scrapers/courseScraper.js";
-import { VenueScraper } from "../scrapers/venueScraper.js";
-import { populateDB, populateVenueDB } from "./dbService.js";
-import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult, VenueData, ScrapeVenueResponse } from "../types/types.js";
+import { populateDB } from "./dbService.js";
+import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeCourseResponse, ScrapeCourseResult } from "../types/types.js";
 import type { Element } from "domhandler";
 
 function processCourseSchedule(html: string): CourseSchedule[] {
@@ -91,7 +90,7 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     return courseSchedule;
 };
 
-async function scrapeData(): Promise<ScrapeResult> {
+async function scrapeData(): Promise<ScrapeCourseResult> {
     const scraper = new CourseScraper();
 
     try {
@@ -106,54 +105,16 @@ async function scrapeData(): Promise<ScrapeResult> {
     }
 }
 
-async function scrapeService(): Promise<ScrapeResponse> {
+async function scrapeCourseService(): Promise<ScrapeCourseResponse> {
     try {
-        const scrapeResult: ScrapeResult = await scrapeData();
+        const scrapeResult: ScrapeCourseResult = await scrapeData();
         await populateDB(scrapeResult.acadYr, scrapeResult.sem, scrapeResult.courseSchedule);
         return { success: true, acadYr: scrapeResult.acadYr, sem: scrapeResult.sem, count: scrapeResult.courseSchedule.length };
 
     } catch (err) {
-        console.error("Error occurred in scrapeService:", (err as Error).message);
+        console.error("Error occurred in scrapeCourseService:", (err as Error).message);
         throw err;
     }
 }
 
-
-function processVenueData(html: string): VenueData[] {
-
-    const $ = load(html);
-    
-    const venues: VenueData[] = []
-
-    const rows = $("table tr").toArray();
-    for (const row of rows) {
-        const rowData: string[] = [];
-
-        $(row).find("th, td").each((j: Number, cell: Element) => {
-            const text = $(cell).text().replace(/\s+/g, " ").trim();
-            rowData.push(text);
-        });
-
-        
-
-
-
-    }
-    
-    return venues
-}
-
-async function scrapeVenueService(): Promise<ScrapeVenueResponse> {
-    const scraper = new VenueScraper();
-    try {
-        const html: string = await scraper.getVenue();
-        const venues: VenueData[] = processVenueData(html);
-        await populateVenueDB(venues);
-        return { success: true, count: venues.length };
-    } catch (err) {
-        console.error("Error occurred in scrapeVenueData:", (err as Error).message);
-        throw err;
-    }
-}
-
-export { scrapeService, scrapeVenueService };
+export { scrapeCourseService };
