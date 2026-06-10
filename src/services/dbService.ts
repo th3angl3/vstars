@@ -1,7 +1,7 @@
 import { ClientSession } from "mongodb";
 import { client } from "../config/db.js";
 import { DB_NAME, COLLECTIONS } from "../config/constants.js";
-import type { CourseSchedule } from "../types/types.js";
+import type { CourseSchedule, VenueData } from "../types/types.js";
 
 async function populateDB(acadYr: number, sem: number, courseSchedule: CourseSchedule[]): Promise<void> {
     const session: ClientSession = client.startSession();
@@ -43,4 +43,23 @@ async function fetchCourseSchedule(courseCodeList: string[]): Promise<CourseSche
     return courseSchedules;
 }
 
-export { populateDB, fetchCourseSchedule };
+async function populateVenueDB(venues: VenueData[]): Promise<void> {
+    const session: ClientSession = client.startSession();
+
+    try {
+        session.startTransaction();
+
+        const collection = client.db(DB_NAME).collection(COLLECTIONS.VENUE);
+        await collection.deleteMany({}, { session });
+        await collection.insertMany(venues, { session });
+
+        await session.commitTransaction();
+    } catch (err) {
+        console.error("Database operation failed:", (err as Error).message);
+        throw err;
+    } finally {
+        await session.endSession();
+    }
+}
+
+export { populateDB, fetchCourseSchedule, populateVenueDB };

@@ -1,7 +1,7 @@
 import { load } from "cheerio";
-import { Scraper } from "../scrapers/courseScraper.js";
+import { CourseScraper } from "../scrapers/courseScraper.js";
 import { populateDB } from "./dbService.js";
-import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeResponse, ScrapeResult } from "../types/types.js";
+import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeCourseResponse, ScrapeCourseResult } from "../types/types.js";
 import type { Element } from "domhandler";
 
 function processCourseSchedule(html: string): CourseSchedule[] {
@@ -10,8 +10,7 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     const courseSchedule: CourseSchedule[] = [];
     let currentIndex: CourseIndex | null = null;
     let courseInfo: CourseSchedule | null = null;
-    let index: string = "", type: string = "", group: string = "", day: string = "", time: string = "", venue: string = "", remark: string = "" ;
-
+    
     const rows = $("table tr").toArray();
     for (const row of rows) {
         const rowData: string[] = [];
@@ -91,8 +90,8 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     return courseSchedule;
 };
 
-async function scrapeData(): Promise<ScrapeResult> {
-    const scraper = new Scraper();
+async function scrapeData(): Promise<ScrapeCourseResult> {
+    const scraper = new CourseScraper();
 
     try {
         const acadYrSem: AcadYrSem = await scraper.getAcadYrSem();
@@ -106,16 +105,16 @@ async function scrapeData(): Promise<ScrapeResult> {
     }
 }
 
-async function scrapeService(): Promise<ScrapeResponse> {
+async function scrapeCourseService(): Promise<ScrapeCourseResponse> {
     try {
-        const scrapeResult: ScrapeResult = await scrapeData();
+        const scrapeResult: ScrapeCourseResult = await scrapeData();
         await populateDB(scrapeResult.acadYr, scrapeResult.sem, scrapeResult.courseSchedule);
         return { success: true, acadYr: scrapeResult.acadYr, sem: scrapeResult.sem, count: scrapeResult.courseSchedule.length };
 
     } catch (err) {
-        console.error("Error occurred in scrapeService:", (err as Error).message);
+        console.error("Error occurred in scrapeCourseService:", (err as Error).message);
         throw err;
     }
 }
 
-export { scrapeService };
+export { scrapeCourseService };

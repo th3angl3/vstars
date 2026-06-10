@@ -1,4 +1,5 @@
 import type { ObjectId } from "mongodb";
+import { SPINES } from "../config/constants.js";
 
 export interface CourseIndex {
     index: string;
@@ -28,16 +29,22 @@ export interface AcadYrSem {
     sem: number;
 }
 
-export interface ScrapeResult extends AcadYrSem {
+export interface ScrapeCourseResult extends AcadYrSem {
     courseSchedule: CourseSchedule[];
 }
 
-export interface ScrapeResponse {
+export interface ScrapeCourseResponse {
     success: boolean;
     acadYr: number;
     sem: number;
     count: number;
     message? : string;
+}
+
+export interface ScrapeVenueResponse {
+    success: boolean;
+    count: number;
+    message?: string;
 }
 
 export type DayOfWeek = "MON" | "TUE" | "WED" | "THU" | "FRI";
@@ -57,4 +64,12 @@ export interface TimetableResponse {
     count: number;
     notFound: string[];   // course codes not found in DB
     timetables: TimetableEntry[][];
+}
+
+export type Spine = typeof SPINES[number];
+
+export interface VenueData {
+    spine: Spine;
+    name: string;
+    location: string;
 }

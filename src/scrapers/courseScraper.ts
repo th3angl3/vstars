@@ -2,7 +2,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import type { AcadYrSem } from "../types/types.js";
 
-export class Scraper {
+export class CourseScraper {
     private readonly ACAD_SEM_URL = "https://wish.wis.ntu.edu.sg/webexe/owa/aus_schedule.main";
     private readonly SOURCE_URL = "https://wish.wis.ntu.edu.sg/webexe/owa/AUS_SCHEDULE.main_display1";
     

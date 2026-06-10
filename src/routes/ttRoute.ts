@@ -2,6 +2,6 @@ import express from "express";
 import { ttController } from "../controllers/ttController.js";
 
 const router = express.Router();
-router.post("/generatett", ttController);
+router.post("/", ttController);
 
 export default router;
