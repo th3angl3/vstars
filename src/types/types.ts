@@ -31,13 +31,15 @@ export interface AcadYrSem {
 
 export interface ScrapeCourseResult extends AcadYrSem {
     courseSchedule: CourseSchedule[];
+    venueDoc: VenueDocument;
 }
 
 export interface ScrapeCourseResponse {
     success: boolean;
     acadYr: number;
     sem: number;
-    count: number;
+    courseCount: number;
+    entryCount: number;
     message? : string;
 }
 
@@ -72,4 +74,16 @@ export interface VenueData {
     spine: Spine;
     name: string;
     location: string;
+}
+
+export interface VenueTiming {
+    courseCode: string;
+    courseTitle: string;
+    day: string;
+    time: string;
+}
+
+export interface VenueDocument {
+    records: Record<string, VenueTiming[]>;
+    count: number;
 }

@@ -1,8 +1,10 @@
 import { load } from "cheerio";
 import { CourseScraper } from "../scrapers/courseScraper.js";
-import { populateDB } from "./dbService.js";
-import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeCourseResponse, ScrapeCourseResult } from "../types/types.js";
+import { fetchVenue, populateCourseDB } from "./dbService.js";
+import type { AcadYrSem, CourseSchedule, CourseIndex, IndexEntry, ScrapeCourseResponse, ScrapeCourseResult, VenueDocument, VenueTiming } from "../types/types.js";
 import type { Element } from "domhandler";
+import { scrapeVenueService } from "./scrapeVenueService.js";
+
 
 function processCourseSchedule(html: string): CourseSchedule[] {
     const $ = load(html);
@@ -90,6 +92,44 @@ function processCourseSchedule(html: string): CourseSchedule[] {
     return courseSchedule;
 };
 
+function processVenueTiming(venues: string[], courseSchedules: CourseSchedule[]): VenueDocument {
+    const venueMap: Record<string, VenueTiming[]> = {};
+    let count: number = 0
+
+    for (const venue of venues) {
+        venueMap[venue] = [];
+    }
+
+    for (const course of courseSchedules) {
+        for (const index of course.schedule) {
+            for (const entry of index.entry) {
+
+                const venue = entry.venue;
+
+                if (!venue || venue.trim() === "" || !venueMap[venue]) {
+                    continue // skip entry not in venue list
+                }
+
+                const cleanedTitle = course.courseTitle
+                    .replace(/[^a-zA-Z0-9 &:]/g, "")
+                    .replace(/\s+/g, " ")
+                    .trim();
+
+                venueMap[venue].push({
+                    courseCode: course.courseCode,
+                    courseTitle: cleanedTitle,
+                    day: entry.day,
+                    time: entry.time
+                });
+                count++;
+                
+            }
+        }
+    }
+
+    return { records: venueMap, count: count };
+}
+
 async function scrapeData(): Promise<ScrapeCourseResult> {
     const scraper = new CourseScraper();
 
@@ -97,8 +137,14 @@ async function scrapeData(): Promise<ScrapeCourseResult> {
         const acadYrSem: AcadYrSem = await scraper.getAcadYrSem();
         const html = await scraper.getCourseScheduleHtml(acadYrSem.acadYr, acadYrSem.sem);
         const courseSchedule = processCourseSchedule(html);
+        let venues = await fetchVenue();
+        if (venues.length === 0) {
+            await scrapeVenueService();
+            venues = await fetchVenue();
+        }
+        const venueDoc = processVenueTiming(venues, courseSchedule);
 
-        return { ...acadYrSem, courseSchedule };
+        return { ...acadYrSem, courseSchedule, venueDoc };
     } catch (err) {
         console.error("Error occurred while scraping data:", (err as Error).message);
         throw err;
@@ -108,8 +154,8 @@ async function scrapeData(): Promise<ScrapeCourseResult> {
 async function scrapeCourseService(): Promise<ScrapeCourseResponse> {
     try {
         const scrapeResult: ScrapeCourseResult = await scrapeData();
-        await populateDB(scrapeResult.acadYr, scrapeResult.sem, scrapeResult.courseSchedule);
-        return { success: true, acadYr: scrapeResult.acadYr, sem: scrapeResult.sem, count: scrapeResult.courseSchedule.length };
+        await populateCourseDB(scrapeResult.acadYr, scrapeResult.sem, scrapeResult.courseSchedule, scrapeResult.venueDoc);
+        return { success: true, acadYr: scrapeResult.acadYr, sem: scrapeResult.sem, courseCount: scrapeResult.courseSchedule.length, entryCount: scrapeResult.venueDoc.count };
 
     } catch (err) {
         console.error("Error occurred in scrapeCourseService:", (err as Error).message);

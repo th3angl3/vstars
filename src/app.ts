@@ -7,7 +7,7 @@ const app = express();
 
 app.use(express.json());
 app.use("/venue", scrapeVenueRoute)
-app.use("/course", scrapeCourseRoute);
+app.use("/scrape", scrapeCourseRoute);
 app.use("/tt", ttRoute);
 
 app.get('/', (req: Request, res: Response) => {
