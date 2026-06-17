@@ -1,5 +1,5 @@
 import { fetchCourseSchedule } from "./dbService.js";
-import type { CourseIndex, CourseSchedule, TimetableFilter, DayOfWeek, TimetableEntry, TimetableResponse } from "../types/types.js";
+import type { CourseIndex, CourseSchedule, DayOfWeek, TimetableEntry, TimetableResponse, TimetableOptions } from "../types/types.js";
 import { MAX_TIMETABLE_RESULTS } from "../config/constants.js";
 
 async function getCourseSchedule(courseCodeList: string[]): Promise<{ schedules: CourseSchedule[]; notFound: string[]}> {   
@@ -26,25 +26,78 @@ function timeToIndex(time: string): number[] {
     return timeIndices;
 }
 
-function isConflict(schedule: CourseIndex[]): boolean {
-    const timetable: Record<string, boolean[]> = {};
+function parseTeachingWks(remark: string): Set<number> | null {
+    const match = remark.match(/Teaching Wk\s*([\d,\-]+)/i);
+    if (!match) {
+        return null;
+    }
 
+    const weeks = new Set<number>();
+    const parts = match[1]!.split(",");
+
+    for (const part of parts) {
+        const trimmed = part.trim();
+
+        if (trimmed.includes("-")) {
+            const [startStr, endStr] = trimmed.split("-");
+            const start = parseInt(startStr!, 10);
+            const end = parseInt(endStr!, 10);
+
+            if (isNaN(start) || isNaN(end)) {
+                continue;
+            }
+
+            for (let w = start; w <= end; w++) {
+                weeks.add(w);
+            }
+        } else {
+            const week = parseInt(trimmed, 10);
+            if (!isNaN(week)) {
+                weeks.add(week);
+            }
+        }
+    }
+
+    return weeks;
+}
+
+function weeksOverlap(a: Set<number> | null, b: Set<number> | null): boolean {
+    if (a === null || b === null) {
+        return true;
+    }
+
+    for (const week of a) {
+        if (b.has(week)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function isConflict(schedule: CourseIndex[]): boolean {
+    const timetable: Record<string, (Set<number> | null)[][]> = {};
 
     for (const course of schedule) {
         for (const entry of course.entry) {
             const day = entry.day;
             const timeIndices = timeToIndex(entry.time);
+            const weeks = parseTeachingWks(entry.remark);
 
             if (!timetable[day]) {
-                timetable[day] = Array(14).fill(false);
+                timetable[day] = Array.from({ length: 14 }, () => []);
             }
 
             for (const index of timeIndices) {
-                if (timetable[day][index]) {
-                    return true;
+                const occupied = timetable[day][index]!;
+
+                for (const existingWeeks of occupied) {
+                    if (weeksOverlap(existingWeeks, weeks)) {
+                        return true;
+                    }
                 }
 
-                timetable[day][index] = true;
+                occupied.push(weeks);
             }
         }
     }
@@ -52,12 +105,17 @@ function isConflict(schedule: CourseIndex[]): boolean {
     return false;
 }
 
-function isFilterConflict(course: CourseIndex, filters: TimetableFilter[]): boolean {
+function isFilterConflict(course: CourseIndex, filterOptions: TimetableOptions): boolean {
     for (const entry of course.entry) {
+
+        if (filterOptions.ignoreLEC && entry.type === "LEC/STUDIO") {
+            continue; // ignore LEC
+        }
+
         const day = entry.day as DayOfWeek;
         const timeIndices = timeToIndex(entry.time);
 
-        for (const filter of filters) {
+        for (const filter of filterOptions.filters) {
             const excluded = filter.excludeTimeSlots?.[day];
 
             if (!excluded) {
@@ -75,7 +133,7 @@ function isFilterConflict(course: CourseIndex, filters: TimetableFilter[]): bool
 
 function generateTimetables(
     courseSchedules: CourseSchedule[],
-    filters: TimetableFilter[],
+    filterOptions: TimetableOptions,
     inserted: TimetableEntry[],
     result: TimetableEntry[][] = []
 ): TimetableEntry[][] {
@@ -93,8 +151,8 @@ function generateTimetables(
 
         inserted.push({ courseCode: current!.courseCode, courseTitle: current!.courseTitle, selectedIndex: index });
 
-        if (!isConflict(inserted.map(e => e.selectedIndex)) && !isFilterConflict(index, filters)) {
-            generateTimetables(rest, filters, inserted, result);
+        if (!isFilterConflict(index, filterOptions) && !isConflict(inserted.map(e => e.selectedIndex))) {
+            generateTimetables(rest, filterOptions, inserted, result);
         }
 
         inserted.pop();
@@ -103,11 +161,11 @@ function generateTimetables(
     return result;
 }
 
-async function generateTimetableService(courseCodeList: string[], filters: TimetableFilter[]): Promise<TimetableResponse> {
+async function generateTimetableService(courseCodeList: string[], filterOptions: TimetableOptions): Promise<TimetableResponse> {
     const { schedules, notFound } = await getCourseSchedule(courseCodeList);
 
     schedules.sort((a, b) => a.schedule.length - b.schedule.length);
-    const timetables = generateTimetables(schedules, filters, [], []);
+    const timetables = generateTimetables(schedules, filterOptions, [], []);
 
     return { success: true, count: timetables.length, notFound, timetables };
 }

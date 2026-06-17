@@ -55,6 +55,11 @@ export interface TimetableFilter {
     excludeTimeSlots?: Partial<Record<DayOfWeek, number[]>>;
 }
 
+export interface TimetableOptions {
+    ignoreLEC: boolean;
+    filters: TimetableFilter[];
+}
+
 export interface TimetableEntry {
     courseCode: string;
     courseTitle: string;
@@ -66,6 +71,7 @@ export interface TimetableResponse {
     count: number;
     notFound: string[];   // course codes not found in DB
     timetables: TimetableEntry[][];
+    message?: string;
 }
 
 export type Spine = typeof SPINES[number];
@@ -86,4 +92,10 @@ export interface VenueTiming {
 export interface VenueDocument {
     records: Record<string, VenueTiming[]>;
     count: number;
+}
+
+export interface TimetableRequest {
+    courseCodes: string[];
+    filterOptions?: TimetableOptions;
+    maxResults?: number;
 }

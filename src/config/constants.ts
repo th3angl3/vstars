@@ -15,3 +15,8 @@ export const SPINES = [
     "THE ARC",
     "SCI BUILDING"
 ];
+
+export const DEFAULT_TIMETABLE_OPTIONS = {
+    ignoreLEC: false,
+    filters: []
+};
