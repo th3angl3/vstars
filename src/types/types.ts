@@ -80,6 +80,7 @@ export interface VenueData {
     spine: Spine;
     name: string;
     location: string;
+    timings? : VenueTiming[]
 }
 
 export interface VenueTiming {
@@ -98,4 +99,14 @@ export interface TimetableRequest {
     courseCodes: string[];
     filterOptions?: TimetableOptions;
     maxResults?: number;
+}
+
+export interface TrResponse {
+    success: boolean;
+    records: TrEmptyTime[]
+}
+
+export interface TrEmptyTime {
+    venue: string;
+    timing: string
 }

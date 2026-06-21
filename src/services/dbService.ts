@@ -1,7 +1,7 @@
-import { ClientSession, Collection, type Document } from "mongodb";
+import { ClientSession } from "mongodb";
 import { client } from "../config/db.js";
 import { DB_NAME, COLLECTIONS } from "../config/constants.js";
-import type { CourseSchedule, VenueData, VenueDocument } from "../types/types.js";
+import type { CourseSchedule, Spine, VenueData, VenueDocument, VenueTiming } from "../types/types.js";
 
 async function populateCourseDB(acadYr: number, sem: number, courseSchedule: CourseSchedule[], venueDoc: VenueDocument): Promise<void> {
     const session: ClientSession = client.startSession();
@@ -89,4 +89,24 @@ async function fetchVenue(): Promise<string[]> {
     return venues.map(v => v.name)
 }
 
-export { populateCourseDB, fetchCourseSchedule, populateVenueDB, fetchVenue };
+async function getVenueTT(venue: string): Promise<VenueTiming[]> {
+    const collection = client.db(DB_NAME).collection(COLLECTIONS.VENUE);
+    const record = await collection.findOne(
+        { name: venue },
+        { projection: { _id: 0, timings: 1 } }
+    );
+
+    return record?.timings ?? []
+}
+
+async function getSpineTT(spine: Spine): Promise<VenueData[]> {
+    const collection = client.db(DB_NAME).collection<VenueData>(COLLECTIONS.VENUE);
+    const doc = await collection.find(
+        { spine: spine },
+        { projection: { _id : 0 } }
+    ).toArray();
+
+    return doc
+}
+
+export { populateCourseDB, fetchCourseSchedule, populateVenueDB, fetchVenue, getVenueTT, getSpineTT };
