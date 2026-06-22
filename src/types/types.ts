@@ -101,7 +101,13 @@ export interface TimetableRequest {
     maxResults?: number;
 }
 
-export interface TrResponse {
+export interface emptyTrRequest {
+    spine: Spine;
+    day: string;
+    time: string
+}
+
+export interface emptyTrResponse {
     success: boolean;
     records: TrEmptyTime[]
 }
