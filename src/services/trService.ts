@@ -1,5 +1,6 @@
-import { getSpineTT } from "./dbService.js";
-import type { DayOfWeek, Spine, TrEmptyTime, emptyTrResponse, VenueData } from "../types/types.js";
+import { getSpineTT, getVenueTT } from "./dbService.js";
+import type { DayOfWeek, Spine, TrEmptyTime, emptyTrResponse, VenueData, TrTtResponse, VenueTiming, CourseTiming } from "../types/types.js";
+import { timeToIndex } from "./ttService.js";
 
 const DAY_END = parseTimePoint("2330");
 
@@ -106,4 +107,30 @@ async function emptyTrService(spine: Spine, rawDay: string, rawTime: string): Pr
     return { success: true, records: sortRecords(records) };
 }
 
-export { emptyTrService };
+async function trTtService(tr: string): Promise<TrTtResponse> {
+    try {
+        const venueTiming: VenueTiming[] = await getVenueTT(tr);
+
+        const courses: Record<DayOfWeek, CourseTiming[]> = {
+            MON: [], TUE: [], WED: [], THU: [], FRI: []
+        };
+
+        for (const v of venueTiming) {
+            const day = v.day as DayOfWeek;
+            if (courses[day]) {
+                courses[day].push({
+                    courseCode: v.courseCode,
+                    courseTitle: v.courseTitle,
+                    time: timeToIndex(v.time),
+                });
+            }
+        }
+
+        return { success: true, courses };
+    } catch (err) {
+        console.error("Error occurred in trTTService:", (err as Error).message);
+        throw err;
+    }
+}
+
+export { emptyTrService, trTtService };

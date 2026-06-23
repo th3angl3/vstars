@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import type { emptyTrRequest, emptyTrResponse } from "../types/types.js";
 import { SPINES } from "../config/constants.js";
-import { emptyTrService } from "../services/emptyTrService.js";
+import { emptyTrService } from "../services/trService.js";
 
 async function emptyTrController(
     req: Request<{}, emptyTrResponse, emptyTrRequest>,

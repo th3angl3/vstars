@@ -116,3 +116,16 @@ export interface TrEmptyTime {
     venue: string;
     timing: string
 }
+
+export type TrTtRequest = { tr: string };
+
+export interface TrTtResponse {
+    success: boolean;
+    courses: Record<DayOfWeek, CourseTiming[]>
+}
+
+export interface CourseTiming {
+    courseCode: string;
+    courseTitle: string;
+    time: number[];
+}

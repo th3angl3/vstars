@@ -171,4 +171,4 @@ async function generateTimetableService(courseCodeList: string[], filterOptions:
 }
 
 
-export { generateTimetableService };
+export { generateTimetableService, timeToIndex };
