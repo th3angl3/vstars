@@ -10,7 +10,8 @@ async function scrapeCourseController(req: Request, res: Response<ScrapeCourseRe
             success: false,
             acadYr: 0,
             sem: 0,
-            count: 0,
+            courseCount: 0,
+            entryCount: 0,
             message: "Scraping is already in progress. Please try again later."
         });
         return;

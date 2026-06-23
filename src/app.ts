@@ -2,13 +2,17 @@ import express, { type Request, type Response, type NextFunction } from "express
 import scrapeVenueRoute from "./routes/scrapeVenueRoute.js";
 import scrapeCourseRoute from "./routes/scrapeCourseRoute.js";
 import ttRoute from "./routes/ttRoute.js";
+import emptyTrRoute from "./routes/emptyTrRoute.js"
+import trTtRoute from "./routes/trTtRoute.js"
 
 const app = express();
 
 app.use(express.json());
 app.use("/venue", scrapeVenueRoute)
-app.use("/course", scrapeCourseRoute);
+app.use("/scrape", scrapeCourseRoute);
 app.use("/tt", ttRoute);
+app.use("/empty", emptyTrRoute);
+app.use("/tr", trTtRoute);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, World!');
