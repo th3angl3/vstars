@@ -3,4 +3,8 @@
 
 vstars is a student-focused web application designed to help **NTU (Nanyang Technological University)** students quickly **find empty tutorial rooms & generate course timetable**.
 
-dev: frontend
+
+## Projects
+
+- `vstars/` — Express/MongoDB backend API
+- `vstars-client/` — React frontend (in development)
