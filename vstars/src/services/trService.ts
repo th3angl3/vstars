@@ -100,6 +100,7 @@ async function emptyTrService(spine: Spine, rawDay: string, rawTime: string): Pr
 
         records.push({
             venue: venue.name,
+            location: venue.location,
             timing: `${time}-${minutesToHHMM(freeUntil)}`,
         });
     }

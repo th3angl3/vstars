@@ -114,6 +114,7 @@ export interface emptyTrResponse {
 
 export interface TrEmptyTime {
     venue: string;
+    location: string;
     timing: string
 }
 
