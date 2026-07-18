@@ -7,4 +7,4 @@ vstars is a student-focused web application designed to help **NTU (Nanyang Tech
 ## Projects
 
 - `vstars/` — Express/MongoDB backend API
-- `vstars-client/` — React frontend (in development)
+- `vstars-client/` — React frontend
