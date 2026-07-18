@@ -10,7 +10,7 @@ async function trTtController(
     const { tr } = req.body;
 
     if (!tr) {
-        res.status(400).json({ success: false, timings: [] })
+        res.status(400).json({ success: false, courses: { MON: [], TUE: [], WED: [], THU: [], FRI: [] } })
         return;
     }
 

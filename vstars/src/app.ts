@@ -14,10 +14,6 @@ app.use("/tt", ttRoute);
 app.use("/empty", emptyTrRoute);
 app.use("/tr", trTtRoute);
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello, World!');
-});
-
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
     const message = err instanceof Error ? err.message : "An unknown error occurred";
     console.error(err);
