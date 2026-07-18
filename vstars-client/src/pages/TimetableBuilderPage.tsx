@@ -188,6 +188,15 @@ function TimetableBuilderPage() {
         setJumpInput(String(nextIndex + 1))
     }
 
+    const displayedTimetable = ttResult?.timetables[selectedOptionIndex] ?? []
+
+    const selectedIndexMap = new Map(
+        displayedTimetable.map((entry) => [
+            entry.courseCode,
+            entry.selectedIndex.index,
+        ])
+    )
+
     const previewBlocks = new Map<string, { courseCode: string; courseTitle: string; type: string; day: DayOfWeek; startRow: number; endRow: number; dayIndex: number }>()
 
     if (ttResult?.timetables[selectedOptionIndex]) {
@@ -259,14 +268,25 @@ function TimetableBuilderPage() {
 
                             <div className="jump-controls">
                                 <label htmlFor="jump">Jump to</label>
-                                <input
-                                    id="jump"
-                                    type="number"
-                                    min="1"
-                                    max={ttResult.count}
-                                    value={jumpInput}
-                                    onChange={(event) => setJumpInput(event.target.value)}
-                                />
+
+                                <div className="jump-input-group">
+                                    <input
+                                        id="jump"
+                                        type="number"
+                                        min="1"
+                                        max={ttResult.count}
+                                        value={jumpInput}
+                                        onChange={(event) => setJumpInput(event.target.value)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "Enter") {
+                                                event.preventDefault()
+                                                handleJumpToTimetable()
+                                            }
+                                        }}
+                                    />
+                                    <span className="jump-total">/ {ttResult.count}</span>
+                                </div>
+
                                 <button type="button" onClick={handleJumpToTimetable}>
                                     Go
                                 </button>
@@ -336,6 +356,12 @@ function TimetableBuilderPage() {
                             rows={4}
                             value={courseInput}
                             onChange={(event) => setCourseInput(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" && !event.shiftKey) {
+                                    event.preventDefault()
+                                    handleAddCourseCodes()
+                                }
+                            }}
                             placeholder="CC0001, CC0002"
                         />
                         <button type="button" className="secondary-button" onClick={handleAddCourseCodes}>
@@ -344,12 +370,16 @@ function TimetableBuilderPage() {
 
                         {selectedCourses.length > 0 ? (
                             <div className="course-list">
-                                {selectedCourses.map((course, index) => (
+                                {selectedCourses.map((course) => (
                                     <div key={course.code} className="course-row">
                                         <div>
                                             <strong>{course.code}</strong>
-                                            <span className="option-index">#{index + 1}</span>
-                                            <div className="meta-text">{course.title || "Title pending"}</div>
+                                            <span className="option-index">
+                                                {selectedIndexMap.get(course.code) ?? "-"}
+                                            </span>
+                                            <div className="meta-text">
+                                                {course.title || "Title pending"}
+                                            </div>
                                         </div>
                                         <button
                                             type="button"
@@ -380,37 +410,6 @@ function TimetableBuilderPage() {
                     </form>
 
                     {ttError ? <p className="error-text">{ttError}</p> : null}
-
-                    {ttResult ? (
-                        <div className="result-block">
-                            <div className="result-summary">
-                                <strong>{ttResult.count}</strong> timetable option{ttResult.count === 1 ? "" : "s"} found.
-                                {ttResult.notFound.length > 0 ? ` Missing: ${ttResult.notFound.join(", ")}` : null}
-                            </div>
-
-                            {ttResult.count > 0 ? (
-                                <p className="meta-text">
-                                    Showing option {selectedOptionIndex + 1} of {ttResult.count}.
-                                </p>
-                            ) : null}
-
-                            {ttResult.timetables[selectedOptionIndex] ? (
-                                <ul className="compact-list">
-                                    {ttResult.timetables[selectedOptionIndex].map((entry, index) => (
-                                        <li key={`${entry.courseCode}-${entry.selectedIndex.index}`}>
-                                            <strong>{entry.courseCode}</strong>
-                                            <span className="option-index">#{index + 1}</span> — {entry.courseTitle}
-                                            <div className="meta-text">
-                                                {entry.selectedIndex.entry.map((slot) => `${slot.day} ${slot.time}`).join(" • ")}
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="meta-text">No timetable options matched the selected filters.</p>
-                            )}
-                        </div>
-                    ) : null}
                 </div>
             </div>
         </section>

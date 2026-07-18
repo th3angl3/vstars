@@ -459,6 +459,18 @@ button:disabled {
   width: 66px;
 }
 
+.jump-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.jump-total {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
 .secondary-button {
   background: #e2e8f0;
   color: #0f172a;
