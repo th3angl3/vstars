@@ -14,7 +14,7 @@ app.use("/scrape", scrapeCourseRoute);
 app.use("/tt", ttRoute);
 app.use("/empty", emptyTrRoute);
 app.use("/tr", trTtRoute);
-app.use(cors({ origin: "https://vstars-client.vercel.app" }));
+app.use(cors({ origin: /\.vercel\.app$/ }));
 
 app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
     const message = err instanceof Error ? err.message : "An unknown error occurred";
