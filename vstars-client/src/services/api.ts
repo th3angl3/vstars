@@ -1,7 +1,7 @@
 import type { emptyTrResponse, TimetableFilter, TimetableResponse, TrTtResponse } from "../types/index";
 import type { Spine } from "../types/index";
 
-const BASE = "";
+const BASE = import.meta.env.VITE_API_URL ?? "";
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
     const res = await fetch(`${BASE}${url}`, options);
