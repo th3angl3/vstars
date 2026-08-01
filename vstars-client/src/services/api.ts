@@ -4,11 +4,25 @@ import type { Spine } from "../types/index";
 const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "") || "";
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-    const res = await fetch(`${BASE}${url}`, options);
+    const headers = new Headers(options?.headers);
+
+    if (import.meta.env.VITE_VERCEL_BYPASS) {
+        headers.set(
+            "x-vercel-protection-bypass",
+            import.meta.env.VITE_VERCEL_BYPASS
+        );
+    }
+
+    const res = await fetch(`${BASE}${url}`, {
+        ...options,
+        headers,
+    });
+
     if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Request failed" }));
         throw new Error(err.message ?? "Request failed");
     }
+
     return res.json();
 }
 
