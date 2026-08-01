@@ -1,7 +1,7 @@
 import type { emptyTrResponse, TimetableFilter, TimetableResponse, TrTtResponse } from "../types/index";
 import type { Spine } from "../types/index";
 
-const BASE = import.meta.env.VITE_API_URL || "";
+const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "") || "";
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
     const res = await fetch(`${BASE}${url}`, options);
@@ -17,7 +17,7 @@ export async function generateTimetable(
     ignoreLec: boolean,
     filters: TimetableFilter[] = []
 ): Promise<TimetableResponse> {
-    return request("/api/tt", {
+    return request("/tt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -35,7 +35,7 @@ export async function getEmptyVenues(
     day: string,
     time: string
 ): Promise<emptyTrResponse> {
-    return request("/api/empty", {
+    return request("/empty", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ spine, day, time }),
@@ -43,7 +43,7 @@ export async function getEmptyVenues(
 }
 
 export async function getTrTimetable(tr: string): Promise<TrTtResponse> {
-    return request("/api/tr", {
+    return request("/tr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tr }),
