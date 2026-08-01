@@ -19,6 +19,7 @@ app.get("/", (_, res) => {
 const allowedOrigins = new Set([
     "http://localhost:3001",
     process.env.FRONTEND_URL,
+    process.env.PREVIEW_URL,
 ]);
 
 app.use(cors({
