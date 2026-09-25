@@ -7,7 +7,7 @@ import TrTimetablePage from "./pages/TrTimetablePage"
 import type { TrTtResponse } from "./types"
 
 function App() {
-    const [activeTab, setActiveTab] = useState<"timetable" | "venue">("timetable")
+    const [activeTab, setActiveTab] = useState<"timetable" | "venue">("venue")
     const [selectedTr, setSelectedTr] = useState("")
     const [trDetails, setTrDetails] = useState<TrTtResponse | null>(null)
     const [trLoading, setTrLoading] = useState(false)
@@ -46,18 +46,18 @@ function App() {
                     <div className="tab-switcher" role="tablist" aria-label="Tools">
                         <button
                             type="button"
-                            className={`tab-button ${activeTab === "timetable" ? "active" : ""}`}
-                            onClick={() => setActiveTab("timetable")}
-                        >
-                            Timetable builder
-                        </button>
-
-                        <button
-                            type="button"
                             className={`tab-button ${activeTab === "venue" ? "active" : ""}`}
                             onClick={() => setActiveTab("venue")}
                         >
                             Venue finder
+                        </button>
+
+                        <button
+                            type="button"
+                            className={`tab-button ${activeTab === "timetable" ? "active" : ""}`}
+                            onClick={() => setActiveTab("timetable")}
+                        >
+                            Timetable builder
                         </button>
                     </div>
                 ) : null}
@@ -72,9 +72,12 @@ function App() {
                     />
                 ) : activeTab === "timetable" ? (
                     <TimetableBuilderPage />
-                ) : (
+                ) : null}
+
+                {/* Kept mounted so its selection and results survive visiting a TR page */}
+                <div hidden={showTrPage || activeTab !== "venue"}>
                     <VenueFinderPage onSelectTr={handleViewTrTimetable} />
-                )}
+                </div>
             </main>
         </div>
     )
