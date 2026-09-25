@@ -1,7 +1,8 @@
 import type { emptyTrResponse, TimetableFilter, TimetableResponse, TrTtResponse } from "../types/index";
 import type { Spine } from "../types/index";
 
-const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "") || "";
+// In dev with no VITE_API_URL, go through the Vite proxy (/api -> localhost:3000)
+const BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "") || (import.meta.env.DEV ? "/api" : "");
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
     const headers = new Headers(options?.headers);

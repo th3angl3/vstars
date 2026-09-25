@@ -1,60 +1,40 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { getEmptyVenues } from "../services/api"
 import { SPINES } from "../config/constants"
 import { TIME_SLOTS } from "../utils/schedule"
 import type { DayOfWeek, Spine, emptyTrResponse } from "../types"
 
+function toMinutes(hhmm: string) {
+    const raw = Number.parseInt(hhmm, 10)
+    return Math.floor(raw / 100) * 60 + (raw % 100)
+}
+
 function getVenueDefaults() {
     const now = new Date()
-    const jsDay = now.getDay()
     const weekdayOrder: DayOfWeek[] = ["MON", "TUE", "WED", "THU", "FRI"]
+    const toWeekday = (jsDay: number) => (jsDay >= 1 && jsDay <= 5 ? weekdayOrder[jsDay - 1] : "MON")
 
-    const currentDay = jsDay >= 1 && jsDay <= 5
-        ? weekdayOrder[jsDay - 1]
-        : "MON"
-
+    const firstSlotStart = TIME_SLOTS[0].split("-")[0]
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
-    const earliestMinutes = 8 * 60
-    const latestMinutes = 22 * 60 + 30
+    const lastSlotEnd = toMinutes(TIME_SLOTS[TIME_SLOTS.length - 1].split("-")[1])
 
-    if (currentMinutes < earliestMinutes) {
-        return { day: currentDay, time: "0800" as const }
-    }
-
-    if (currentMinutes > latestMinutes) {
+    // After the last slot ends, jump to the first slot of the next day
+    if (currentMinutes >= lastSlotEnd) {
         const nextDay = new Date(now)
         nextDay.setDate(nextDay.getDate() + 1)
-        const nextJsDay = nextDay.getDay()
-        const nextDayLabel = nextJsDay >= 1 && nextJsDay <= 5 ? weekdayOrder[nextJsDay - 1] : "MON"
-        return { day: nextDayLabel, time: "0800" as const }
+        return { day: toWeekday(nextDay.getDay()), time: firstSlotStart }
     }
 
-    const slotStarts = TIME_SLOTS.map((slot) => {
-        const rawStart = Number.parseInt(slot.split("-")[0] ?? "0", 10)
-        const hours = Math.floor(rawStart / 100)
-        const minutes = rawStart % 100
-        return hours * 60 + minutes
-    })
-
-    let nearestStart = slotStarts[0]
-    let smallestDiff = Number.POSITIVE_INFINITY
-
-    for (const startValue of slotStarts) {
-        const diff = Math.abs(startValue - currentMinutes)
-        if (diff < smallestDiff) {
-            smallestDiff = diff
-            nearestStart = startValue
+    // Current slot = latest slot that has already started (e.g. 1015 -> 0930)
+    let currentSlotStart = firstSlotStart
+    for (const slot of TIME_SLOTS) {
+        const slotStart = slot.split("-")[0]
+        if (toMinutes(slotStart) <= currentMinutes) {
+            currentSlotStart = slotStart
         }
     }
 
-    const roundedHours = Math.floor(nearestStart / 60)
-    const roundedMinutes = nearestStart % 60
-    const roundedTime = `${String(roundedHours).padStart(2, "0")}${String(roundedMinutes).padStart(2, "0")}`
-
-    return {
-        day: currentDay,
-        time: roundedTime,
-    }
+    return { day: toWeekday(now.getDay()), time: currentSlotStart }
 }
 
 interface VenueFinderPageProps {
@@ -63,14 +43,14 @@ interface VenueFinderPageProps {
 
 function VenueFinderPage({ onSelectTr }: VenueFinderPageProps) {
     const [spine, setSpine] = useState<Spine>("NORTH SPINE")
-    const [day, setDay] = useState<DayOfWeek>(() => getVenueDefaults().day)
-    const [time, setTime] = useState(() => getVenueDefaults().time)
+    const [defaults] = useState(getVenueDefaults)
+    const [day, setDay] = useState<DayOfWeek>(defaults.day)
+    const [time, setTime] = useState(defaults.time)
     const [venueLoading, setVenueLoading] = useState(false)
     const [venueError, setVenueError] = useState("")
     const [venueResult, setVenueResult] = useState<emptyTrResponse | null>(null)
 
-    async function handleFindEmptyVenues(event: FormEvent) {
-        event.preventDefault()
+    async function fetchEmptyVenues() {
         setVenueLoading(true)
         setVenueError("")
 
@@ -87,6 +67,17 @@ function VenueFinderPage({ onSelectTr }: VenueFinderPageProps) {
             setVenueLoading(false)
         }
     }
+
+    function handleFindEmptyVenues(event: FormEvent) {
+        event.preventDefault()
+        fetchEmptyVenues()
+    }
+
+    // Load venues for the default selection on first visit
+    useEffect(() => {
+        fetchEmptyVenues()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     return (
         <section>
